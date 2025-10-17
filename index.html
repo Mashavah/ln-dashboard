@@ -218,6 +218,7 @@
             <button class="btn-add" onclick="addDataPoint()">➕ Add Data Point</button>
             <button class="btn-remove" onclick="removeLastPoint()">➖ Remove Last Point</button>
             <button class="btn-toggle" onclick="toggleChart()">🔄 Toggle Chart View</button>
+            <button class="btn-remove" onclick="resetData()">🔄 Reset to Default Data</button>
         </div>
         
         <div class="chart-container">
@@ -245,13 +246,25 @@
 
     <script>
         // Initial data from the images
-        let chartData = {
+        const defaultData = {
             labels: ['October-24', 'November-24', 'December-24', 'January-25', 'February-25', 'March-25', 'April-25', 'May-25', 'June-25', 'July-25', 'August-25', 'September-25'],
             ln: [27, 18, 20, 21, 39, 49, 50, 39, 39, 26, 35, 47],
             average: [41, 34, 29, 36, 31, 42, 41, 39, 39, 37, 35, 34],
             prevYear: [14, 56, 9, 9, 19, 36, 37, 19, 10, 26, 33, 27]
         };
 
+        // Load data from browser storage or use default
+        function loadData() {
+            const saved = localStorage.getItem('lnChartData');
+            return saved ? JSON.parse(saved) : {...defaultData};
+        }
+
+        // Save data to browser storage
+        function saveData() {
+            localStorage.setItem('lnChartData', JSON.stringify(chartData));
+        }
+
+        let chartData = loadData();
         let currentChartType = 'line';
         let chart;
 
@@ -417,6 +430,9 @@
             chartData.average.push(parseFloat(avg));
             chartData.prevYear.push(prevYear ? parseFloat(prevYear) : null);
             
+            // Save to browser storage
+            saveData();
+            
             // Clear inputs
             document.getElementById('month').value = '';
             document.getElementById('ln-value').value = '';
@@ -433,6 +449,7 @@
                 chartData.ln.pop();
                 chartData.average.pop();
                 chartData.prevYear.pop();
+                saveData();
                 initChart();
                 updateTable();
             }
@@ -443,6 +460,7 @@
             chartData.ln.splice(index, 1);
             chartData.average.splice(index, 1);
             chartData.prevYear.splice(index, 1);
+            saveData();
             initChart();
             updateTable();
         }
@@ -450,6 +468,20 @@
         function toggleChart() {
             currentChartType = currentChartType === 'line' ? 'bar' : 'line';
             initChart();
+        }
+
+        function resetData() {
+            if (confirm('Are you sure you want to reset all data to the original values? This cannot be undone.')) {
+                chartData = {...defaultData, 
+                    labels: [...defaultData.labels],
+                    ln: [...defaultData.ln],
+                    average: [...defaultData.average],
+                    prevYear: [...defaultData.prevYear]
+                };
+                saveData();
+                initChart();
+                updateTable();
+            }
         }
 
         // Initialize on load
